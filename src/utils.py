@@ -1,40 +1,68 @@
+"""
+utils.py — shared utilities for the CPO Competitiveness Monitor ETL pipeline.
+
+Usage in every module:
+    from src.utils import get_logger
+    logger = get_logger(__name__)
+"""
+
+import io as _io
 import logging
 import os
 import sys
-import builtins
 from datetime import datetime
 
-# Force built-in io, not pandas.io
-io = builtins.__import__('io')
 
-def get_logger(name: str) -> logging.Logger:
+def get_logger(name: str = __name__) -> logging.Logger:
     """
-    Returns a configured logger that writes to both console and a log file.
-    Use this at the top of every module:
+    Return a configured logger that writes to both the console and a dated log file.
+
+    Args:
+        name: Logger name — pass __name__ from the calling module so each file
+              gets its own named logger (e.g. "src.extract.extract_worldbank").
+              Defaults to this module's name when called without arguments, but
+              callers should always pass __name__ explicitly.
+
+    Returns:
+        logging.Logger: Configured logger instance. Handlers are only added once
+                        per name, so calling get_logger(__name__) multiple times
+                        in the same module is safe.
+
+    Example:
         logger = get_logger(__name__)
+        logger.info("worldbank: 137 rows extracted")
+        logger.warning("fao: sfvrsn URL param may have rotated — check if 404")
+        logger.error("usda: download failed: %s", exc)
     """
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
 
+    # Guard: don't add handlers a second time (e.g. on module reimport in notebooks)
     if logger.handlers:
         return logger
 
+    logger.setLevel(logging.INFO)
+
     formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    # Console handler - force UTF-8 so arrow characters work on Windows
-    console = logging.StreamHandler(
-        io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", write_through=True)
+    # ── Console handler ──────────────────────────────────────────────────────
+    # Force UTF-8 so arrow characters (→) and ellipsis (…) render correctly on
+    # Windows terminals that default to cp1252.
+    console_stream = _io.TextIOWrapper(
+        sys.stdout.buffer, encoding="utf-8", write_through=True
     )
-    console.setFormatter(formatter)
-    logger.addHandler(console)
+    console_handler = logging.StreamHandler(console_stream)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
-    # File handler - writes to logs/ folder
+    # ── File handler ─────────────────────────────────────────────────────────
+    # One log file per pipeline run, named by timestamp so runs don't overwrite
+    # each other. Folder is created if it doesn't exist.
     os.makedirs("logs", exist_ok=True)
-    log_file = f"logs/pipeline_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    log_path = f"logs/pipeline_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+    file_handler = logging.FileHandler(log_path, encoding="utf-8")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 

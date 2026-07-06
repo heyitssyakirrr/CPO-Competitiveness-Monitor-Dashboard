@@ -1,0 +1,22 @@
+name: cpo_monitor
+version: "1.0.0"
+config-version: 2
+
+profile: cpo_monitor
+
+model-paths: ["models"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  cpo_monitor:
+    staging:
+      +schema: clean        # staging models write into the clean schema
+      +materialized: view   # views — no storage cost, always fresh
+    mart:
+      +schema: mart         # mart models write into the mart schema
+      +materialized: table  # tables — faster reads for the dashboard

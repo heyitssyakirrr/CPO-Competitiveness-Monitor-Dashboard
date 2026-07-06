@@ -1,0 +1,121 @@
+version: 2
+
+models:
+
+  - name: mart_indonesia_policy_tracker
+    description: >
+      Panel 1 data. Indonesia biodiesel policy tracker — monthly biodiesel
+      allocation vs exports vs CPO price, with active mandate labels.
+      One row per month. First 9 rows have NULL supply columns (Jan–Sep 2015).
+    columns:
+      - name: month_date
+        description: Month start date. Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: pogo_zone
+        description: PROFITABLE / MARGINAL / COSTLY
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PROFITABLE', 'MARGINAL', 'COSTLY']
+      - name: active_mandate
+        description: B-mandate active in this month.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Pre-B20', 'B20', 'B30', 'B35', 'B40']
+
+  - name: mart_biodiesel_demand_signal
+    description: >
+      Panel 2 data. Biodiesel demand signal and CPO price cycle monitor.
+      POGO spread, z-score, currency competitiveness indices.
+    columns:
+      - name: month_date
+        description: Month start date. Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: cpo_price
+        description: CPO price USD/tonne.
+        tests:
+          - not_null
+      - name: price_cycle_position
+        description: EXPENSIVE / FAIR / CHEAP / INSUFFICIENT DATA
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['EXPENSIVE', 'FAIR', 'CHEAP', 'INSUFFICIENT DATA']
+      - name: pogo_zone
+        description: PROFITABLE / MARGINAL / COSTLY
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PROFITABLE', 'MARGINAL', 'COSTLY']
+
+  - name: mart_oil_substitution_spreads
+    description: >
+      Panel 3 data. CPO vs substitute vegetable oil spreads and substitution
+      risk classification. Negative spread = CPO cheaper than substitute.
+    columns:
+      - name: month_date
+        description: Month start date. Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: cpo_price
+        description: CPO price USD/tonne.
+        tests:
+          - not_null
+      - name: substitution_risk
+        description: HIGH / MODERATE / LOW (based on CPO vs soy spread only).
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['HIGH', 'MODERATE', 'LOW', 'UNKNOWN']
+
+  - name: mart_cpo_competitiveness
+    description: >
+      Full summary table — all signals joined into one row per month.
+      Used for headline KPIs and cross-panel analysis. For panel-specific
+      charts, prefer the focused mart tables above.
+    columns:
+      - name: month_date
+        description: Month start date. Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: cpo_price
+        description: CPO price USD/tonne.
+        tests:
+          - not_null
+      - name: overall_signal
+        description: >
+          One-line summary of the CPO environment this month.
+          STRONG TAILWIND / MODERATE TAILWIND / NEUTRAL /
+          MODERATE HEADWIND / STRONG HEADWIND.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [
+                'STRONG TAILWIND',
+                'MODERATE TAILWIND',
+                'NEUTRAL',
+                'MODERATE HEADWIND',
+                'STRONG HEADWIND'
+              ]
+      - name: pogo_zone
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PROFITABLE', 'MARGINAL', 'COSTLY']
+      - name: substitution_risk
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['HIGH', 'MODERATE', 'LOW', 'UNKNOWN']
+      - name: price_cycle_position
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['EXPENSIVE', 'FAIR', 'CHEAP', 'INSUFFICIENT DATA']

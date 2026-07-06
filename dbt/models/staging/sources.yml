@@ -1,0 +1,82 @@
+version: 2
+
+sources:
+  - name: clean
+    schema: clean
+    description: >
+      Transformed, calculation-ready tables written by the Python ETL pipeline
+      (transform_prices.py, transform_currency.py, transform_usda.py,
+      transform_spreads.py). This is the single source of truth for all mart models.
+    tables:
+      - name: commodity_prices
+        description: Monthly CPO and substitute oil prices (World Bank) plus Brent crude and soybean futures (yfinance).
+        columns:
+          - name: month_date
+            description: Month start date. Primary key.
+            tests:
+              - unique
+              - not_null
+          - name: cpo_price
+            description: CPO price in USD/tonne (World Bank Pink Sheet).
+            tests:
+              - not_null
+          - name: soyoil_price
+            description: Soybean oil price in USD/tonne (World Bank Pink Sheet).
+          - name: sunflower_price
+            description: Sunflower oil price in USD/tonne (World Bank Pink Sheet).
+          - name: rapeseed_price
+            description: Rapeseed oil price in USD/tonne (World Bank Pink Sheet).
+          - name: brent_crude_usd
+            description: Brent crude price in USD/barrel (yfinance BZ=F, month-end last).
+          - name: soybean_futures_usd
+            description: Soybean futures in USD/bushel (yfinance ZS=F ÷ 100, month-end last).
+
+      - name: currency_rates
+        description: Monthly FX rates (local currency per 1 USD) and MYR/IDR competitiveness indices.
+        columns:
+          - name: month_date
+            description: Month start date. Primary key.
+            tests:
+              - unique
+              - not_null
+          - name: usd_myr
+            description: Malaysian Ringgit per 1 USD. Higher = MYR weakened.
+            tests:
+              - not_null
+          - name: usd_idr
+            description: Indonesian Rupiah per 1 USD. Higher = IDR weakened.
+          - name: usd_inr
+            description: Indian Rupee per 1 USD.
+          - name: usd_cny
+            description: Chinese Yuan per 1 USD.
+          - name: myr_indexed
+            description: USD/MYR indexed to 100 at Jan 2015. Above 100 means MYR has weakened since Jan 2015.
+          - name: idr_indexed
+            description: USD/IDR indexed to 100 at Jan 2015. Above 100 means IDR has weakened since Jan 2015.
+
+      - name: indonesia_supply
+        description: >
+          USDA Indonesia palm oil supply/demand data, forward-filled from annual
+          marketing-year grain to monthly. First 9 rows (Jan–Sep 2015) are NULL —
+          this is expected, not a bug. Marketing year runs Oct 1 – Sep 30.
+        columns:
+          - name: month_date
+            description: Month start date. Primary key.
+            tests:
+              - unique
+              - not_null
+          - name: marketing_year
+            description: USDA marketing year (e.g. 2024 = Oct 2024 – Sep 2025). NULL for Jan–Sep 2015.
+          - name: production_1000mt
+            description: Indonesia palm oil production in thousand metric tonnes.
+          - name: industrial_consumption_1000mt
+            description: >
+              Indonesia industrial palm oil consumption in thousand MT.
+              For Indonesia palm oil, this is overwhelmingly biodiesel (Attribute_ID 140).
+              NOT total domestic consumption (Attribute_ID 125).
+          - name: exports_1000mt
+            description: Indonesia palm oil exports in thousand metric tonnes.
+          - name: ending_stocks_1000mt
+            description: Indonesia palm oil ending stocks in thousand metric tonnes.
+          - name: biodiesel_share_pct
+            description: industrial_consumption / production × 100. Tracks biodiesel mandate intensity.

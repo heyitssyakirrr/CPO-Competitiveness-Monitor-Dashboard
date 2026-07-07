@@ -1,18 +1,8 @@
 # CPO Competitiveness Monitor
 
-A production-grade data engineering pipeline and analytics dashboard that tracks crude palm oil (CPO) market competitiveness for SD Guthrie Bhd — one of the world's largest palm oil producers.
+A monthly automated data pipeline that tracks crude palm oil (CPO) price competitiveness across biodiesel economics and substitute vegetable oils. Build as a data engineering portfolio project
 
-The system ingests data from four public sources every month, processes it through a three-layer data warehouse (raw → clean → mart), and serves a Streamlit dashboard that answers three core business questions.
-
-> **Dashboard:** _[link to be added after deployment]_
-
----
-
-## Business Context
-
-SD Guthrie's CPO competes in two markets simultaneously. In the **edible oil market**, CPO competes on price against soybean oil, sunflower oil, and rapeseed oil — when CPO's price advantage over substitutes narrows, buyers switch. In the **biodiesel market**, CPO's attractiveness as a feedstock is driven by Indonesia's mandate policy: when CPO is cheaper than gas oil (Brent), the biodiesel blend is economically self-funding; when CPO is expensive relative to gas oil, the mandate requires heavy government subsidy and may face political pressure.
-
-This dashboard tracks both dynamics in a single view.
+**Live dashboard:** _[coming soon]_
 
 ---
 
@@ -29,14 +19,14 @@ This dashboard tracks both dynamics in a single view.
        │              │                   │              │
        ▼              ▼                   ▼              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    EXTRACT  (src/extract/)                       │
+│                    EXTRACT  (src/extract/)                      │
 │   extract_worldbank.py  extract_yfinance.py  extract_usda.py    │
-│   extract_fao.py                                                 │
+│   extract_fao.py                                                │
 └─────────────────────────────┬───────────────────────────────────┘
                               │  4 DataFrames
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  LOAD  (src/load.py)                             │
+│                  LOAD  (src/load.py)                            │
 │   Upsert into Supabase PostgreSQL — raw schema                  │
 │                                                                 │
 │   raw.wb_prices        raw.yfinance_daily                       │
@@ -45,7 +35,7 @@ This dashboard tracks both dynamics in a single view.
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                 TRANSFORM  (src/transform/)                      │
+│                 TRANSFORM  (src/transform/)                     │
 │                                                                 │
 │   transform_prices.py    — resample futures daily → monthly     │
 │   transform_currency.py  — invert FX, build competitiveness idx │
@@ -59,7 +49,7 @@ This dashboard tracks both dynamics in a single view.
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    DBT  (dbt/models/)                            │
+│                    DBT  (dbt/models/)                           │
 │                                                                 │
 │   staging/  — thin type-cast wrappers over clean tables         │
 │   mart/     — panel-specific tables for the dashboard           │
@@ -67,12 +57,12 @@ This dashboard tracks both dynamics in a single view.
 │   mart.mart_indonesia_policy_tracker                            │
 │   mart.mart_biodiesel_demand_signal                             │
 │   mart.mart_oil_substitution_spreads                            │
-│   mart.mart_cpo_competitiveness  (master summary)              │
+│   mart.mart_cpo_competitiveness  (master summary)               │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              DASHBOARD  (dashboard/)                             │
+│              DASHBOARD  (dashboard/)                            │
 │   Streamlit — reads from mart tables                            │
 │   Panel 1: Indonesia Biodiesel Policy Tracker                   │
 │   Panel 2: Biodiesel Demand Signal & Price Cycle                │
@@ -144,65 +134,38 @@ MYR and IDR indexed to 100 at January 2015. A value above 100 means the currency
 ---
 
 ## Project Structure
-
+ 
 ```
-CPO-Competitiveness-Monitor-Dashboard/
-│
-├── main.py                         # Pipeline entry point
-├── config.yml                      # All pipeline parameters (thresholds, tickers, dates)
-├── requirements.txt                # Direct dependencies only
+├── main.py                      # pipeline entry point
+├── config.yml                   # all thresholds, tickers, start date
+├── requirements.txt
 │
 ├── src/
 │   ├── extract/
-│   │   ├── extract_worldbank.py    # World Bank Pink Sheet
-│   │   ├── extract_yfinance.py     # FX rates + futures
-│   │   ├── extract_usda.py         # USDA supply/demand
-│   │   └── extract_fao.py          # FAO vegetable oil index
+│   │   ├── extract_worldbank.py
+│   │   ├── extract_yfinance.py
+│   │   ├── extract_usda.py
+│   │   └── extract_fao.py
 │   ├── transform/
-│   │   ├── transform_prices.py     # Resample futures, join WB prices
-│   │   ├── transform_currency.py   # FX inversion + competitiveness index
-│   │   ├── transform_usda.py       # Forward-fill annual → monthly
-│   │   └── transform_spreads.py    # POGO, z-score, substitution spreads
-│   ├── load.py                     # Upsert to Supabase raw schema
-│   └── utils.py                    # Shared logger
+│   │   ├── transform_prices.py    # resample futures daily → monthly
+│   │   ├── transform_currency.py  # invert FX, build competitiveness index
+│   │   ├── transform_usda.py      # forward-fill annual → monthly
+│   │   └── transform_spreads.py   # POGO, z-score, substitution spreads
+│   ├── load.py
+│   └── utils.py
 │
 ├── dbt/
-│   ├── dbt_project.yml
 │   └── models/
-│       ├── staging/                # Type-cast wrappers over clean tables
-│       │   ├── sources.yml
-│       │   ├── stg_commodity_prices.sql
-│       │   ├── stg_currency_rates.sql
-│       │   └── stg_indonesia_supply.sql
-│       └── mart/                   # Panel-specific tables for the dashboard
-│           ├── schema.yml
+│       ├── staging/               # type-cast wrappers over clean tables
+│       └── mart/                  # panel-specific tables
 │           ├── mart_indonesia_policy_tracker.sql
 │           ├── mart_biodiesel_demand_signal.sql
 │           ├── mart_oil_substitution_spreads.sql
 │           └── mart_cpo_competitiveness.sql
 │
-├── dashboard/
-│   └── app.py                      # Streamlit dashboard
-│
-├── notebooks/                      # Exploratory analysis (source of truth for pipeline logic)
-│   ├── 01_explore_worldbank.ipynb
-│   ├── 02_explore_yfinance.ipynb
-│   ├── 03_explore_comtrade.ipynb
-│   ├── 04_explore_usda_fas.ipynb
-│   ├── 05_explore_fao_ffpi_oils.ipynb
-│   ├── 06_build_all_spreads.ipynb
-│   └── 07_validate_pipeline.ipynb
-│
-├── docs/
-│   ├── notebook01Findings.md
-│   ├── notebook02Findings.md
-│   └── notebook03Findings.md
-│
-├── tests/                          # Pipeline unit tests
-│
-└── .github/
-    └── workflows/
-        └── pipeline.yml            # Monthly automation (5th of every month)
+├── dashboard/app.py
+├── notebooks/                     # exploratory analysis (NB01–NB07)
+└── .github/workflows/pipeline.yml
 ```
 
 ---
@@ -263,25 +226,6 @@ dbt run
 dbt test
 ```
 
-### Partial runs
-
-```bash
-# Re-download and load raw data only (skip transforms)
-python main.py --extract-only
-
-# Re-run transforms from existing raw data (skip extraction)
-python main.py --transform-only
-```
-
-### Automated monthly run
-
-The pipeline runs automatically on the **5th of every month at 06:00 UTC** via GitHub Actions. The workflow:
-1. Runs `python main.py` (extract → load raw → transform → write clean)
-2. Runs `dbt run` (build mart tables)
-3. Runs `dbt test` (data quality checks)
-
-Required GitHub repository secrets: `DATABASE_URL`, `DBT_PASSWORD`.
-
 ---
 
 ## Dashboard Panels
@@ -299,20 +243,6 @@ _Dashboard screenshots to be added after deployment._
 
 ---
 
-## Key Design Decisions
-
-**Why Python transforms before dbt?** The hardest calculations — FX inversion, daily-to-monthly resampling, annual-to-monthly forward-filling, rolling z-scores — cannot be expressed in SQL. Python handles these in the `clean` layer. dbt handles the final shaping and data quality testing on top.
-
-**Why Attribute_ID integers in the USDA extractor?** USDA's `Attribute_Description` strings have changed across CSV releases. Filtering by integer IDs (28 = Production, 140 = Industrial Dom. Cons., 88 = Exports, 176 = Ending Stocks) is immune to description renaming.
-
-**Why `Industrial Dom. Cons.` and not `Domestic Consumption`?** For Indonesia palm oil, `Industrial Dom. Cons.` (Attribute_ID 140) specifically tracks biodiesel use. `Domestic Consumption` (Attribute_ID 125) includes food use and other industrial use — too broad for mandate tracking.
-
-**Why soybean oil for substitution risk, not an average?** Soybean oil is the primary global benchmark for edible oil pricing. It trades on the CME, has the deepest liquidity, and is the reference price buyers use when switching decisions are made. Sunflower and rapeseed spreads are shown for context but risk is classified on soy only.
-
-**Why 36-month rolling window for z-score?** Captures roughly three years of price cycles — long enough to smooth short-term noise, short enough to remain responsive to structural price level shifts like the post-2021 commodity supercycle.
-
----
-
 ## Maintenance
 
 **Annual:** The World Bank Pink Sheet URL hash rotates approximately once per year (typically January). When a 404 occurs, update `PINK_SHEET_URL` in `src/extract/extract_worldbank.py`. The new URL is at [worldbank.org/en/research/commodity-markets](https://www.worldbank.org/en/research/commodity-markets).
@@ -322,15 +252,8 @@ _Dashboard screenshots to be added after deployment._
 ---
 
 ## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Language | Python 3.11 |
-| Data processing | pandas, numpy |
-| HTTP / file I/O | requests, openpyxl |
-| Market data | yfinance |
-| Database | Supabase (PostgreSQL) |
-| ORM / SQL | SQLAlchemy, psycopg2 |
+ 
+Python · pandas · SQLAlchemy · psycopg2 · Supabase (PostgreSQL) · dbt · Streamlit · Plotly · GitHub Actions
 | Data transforms (mart layer) | dbt-core, dbt-postgres |
 | Dashboard | Streamlit, Plotly |
 | Orchestration | GitHub Actions |

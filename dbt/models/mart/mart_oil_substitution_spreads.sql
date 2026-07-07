@@ -62,7 +62,7 @@ joined as (
 
         -- Average spread across all three substitutes (summary signal)
         round(
-            (s.cpo_vs_soy_spread + s.cpo_vs_sunflower_spread + s.cpo_vs_rapeseed_spread) / 3.0,
+            ((s.cpo_vs_soy_spread + s.cpo_vs_sunflower_spread + s.cpo_vs_rapeseed_spread) / 3.0)::numeric,
             2
         ) as avg_substitute_spread
 

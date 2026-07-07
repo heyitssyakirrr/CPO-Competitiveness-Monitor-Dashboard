@@ -9,11 +9,11 @@ Data is USDA annual figures forward-filled to monthly grain.
 marketing year starts Oct 2015. This is expected, not a bug.
 
 USDA marketing year runs October 1 → September 30.
-marketing_year 2024 = October 2024 through September 2025.
+market_year 2024 = October 2024 through September 2025.
 
 Columns:
     month_date                      — month start date
-    marketing_year                  — e.g. 2024 (nullable for Jan–Sep 2015)
+    market_year                  — e.g. 2024 (nullable for Jan–Sep 2015)
     production_1000mt               — Indonesia palm oil production (thousand MT)
     industrial_consumption_1000mt   — biodiesel use only (Attribute_ID 140)
     exports_1000mt                  — Indonesia palm oil exports (thousand MT)
@@ -27,7 +27,7 @@ with source as (
 
 select
     month_date::date                            as month_date,
-    marketing_year::integer                     as marketing_year,
+    market_year::integer                     as market_year,
     production_1000mt::numeric(10, 2)           as production_1000mt,
     industrial_consumption_1000mt::numeric(10, 2) as industrial_consumption_1000mt,
     exports_1000mt::numeric(10, 2)              as exports_1000mt,

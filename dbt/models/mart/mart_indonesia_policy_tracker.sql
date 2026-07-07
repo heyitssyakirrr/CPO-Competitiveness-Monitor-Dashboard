@@ -31,7 +31,7 @@ prices as (
 joined as (
     select
         s.month_date,
-        s.marketing_year,
+        s.market_year,
 
         -- Supply/demand volumes (convert 1000 MT → MMT for readability on charts)
         round(s.production_1000mt          / 1000.0, 3) as production_mmt,

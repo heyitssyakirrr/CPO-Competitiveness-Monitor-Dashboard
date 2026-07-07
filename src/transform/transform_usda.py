@@ -15,11 +15,11 @@ Responsibility:
 Marketing year convention (critical):
     USDA palm oil marketing year runs October 1 → September 30.
     Market_Year 2024 covers October 2024 through September 2025.
-    So marketing_year 2024's value is first assigned to month 2024-10-01 and then
+    So market_year 2024's value is first assigned to month 2024-10-01 and then
     forward-filled through 2025-09-01.
 
 Forward-fill strategy:
-    1. Assign each marketing_year → its start month (Oct 1 of that year).
+    1. Assign each market_year → its start month (Oct 1 of that year).
     2. Reindex onto the full monthly date spine from raw.wb_prices.
     3. Forward-fill (ffill) — each year's value propagates until the next year starts.
     This is confirmed NB04 and is the standard approach for annual-to-monthly expansion.
@@ -31,7 +31,7 @@ Expected nulls (documented, not a bug):
 
 Output schema (clean.indonesia_supply):
     month_date                      datetime   PK
-    marketing_year                  int        (e.g. 2024 = Oct 2024 – Sep 2025)
+    market_year                  int        (e.g. 2024 = Oct 2024 – Sep 2025)
     production_1000mt               float
     industrial_consumption_1000mt   float      (= biodiesel — Attribute_ID 140)
     exports_1000mt                  float
@@ -47,7 +47,7 @@ from src.utils import get_logger
 logger = get_logger(__name__)
 
 USDA_COLS = [
-    "marketing_year",
+    "market_year",
     "production_1000mt",
     "industrial_consumption_1000mt",
     "exports_1000mt",
@@ -73,7 +73,7 @@ def transform_usda(engine: Engine) -> pd.DataFrame:
     try:
         # ── 1. Load annual USDA data ──────────────────────────────────────────
         df_usda = pd.read_sql(
-            f"SELECT {', '.join(USDA_COLS)} FROM raw.usda_indonesia ORDER BY marketing_year",
+            f"SELECT {', '.join(USDA_COLS)} FROM raw.usda_indonesia ORDER BY market_year",
             engine,
         )
         logger.info("transform_usda: usda_indonesia loaded — %d marketing years", len(df_usda))
@@ -90,7 +90,7 @@ def transform_usda(engine: Engine) -> pd.DataFrame:
         # ── 3. Map each marketing year → its October 1 start date ────────────
         # Marketing year 2024 starts 2024-10-01.
         df_usda["month_date"] = pd.to_datetime(
-            df_usda["marketing_year"].astype(str) + "-10-01"
+            df_usda["market_year"].astype(str) + "-10-01"
         )
 
         # ── 4. Set month_date as index and reindex onto the full monthly spine ─
@@ -104,22 +104,22 @@ def transform_usda(engine: Engine) -> pd.DataFrame:
         # limit=None means we fill all the way to the next marketing year start.
         df_expanded = df_expanded.ffill()
 
-        # ── 6. Restore month_date as a column and cast marketing_year to int ──
+        # ── 6. Restore month_date as a column and cast market_year to int ──
         df_expanded = df_expanded.reset_index().rename(columns={"index": "month_date"})
         df_expanded["month_date"] = pd.to_datetime(df_expanded["month_date"])
 
-        # marketing_year may have been coerced to float by reindex; restore to int
+        # market_year may have been coerced to float by reindex; restore to int
         # but only where not NaN (the 9 pre-Oct-2015 rows are intentionally NaN)
-        df_expanded["marketing_year"] = (
-            df_expanded["marketing_year"]
-            .where(df_expanded["marketing_year"].notna())
+        df_expanded["market_year"] = (
+            df_expanded["market_year"]
+            .where(df_expanded["market_year"].notna())
             .astype("Int64")  # pandas nullable integer — supports NaN without float coercion
         )
 
         # ── 7. Validate expected nulls ────────────────────────────────────────
         # Jan 2015 – Sep 2015 (9 months) should be NaN for all USDA value columns.
         # Anything else is unexpected and warrants investigation.
-        value_cols = [c for c in USDA_COLS if c != "marketing_year"]
+        value_cols = [c for c in USDA_COLS if c != "market_year"]
         null_counts = {col: int(df_expanded[col].isna().sum()) for col in value_cols}
         expected_nulls = 9
 

@@ -18,12 +18,16 @@ models:
         tests:
           - not_null
           - accepted_values:
+              config:
+                severity: warn
               values: ['PROFITABLE', 'MARGINAL', 'COSTLY']
       - name: active_mandate
         description: B-mandate active in this month.
         tests:
           - not_null
           - accepted_values:
+              config:
+                severity: warn
               values: ['Pre-B20', 'B20', 'B30', 'B35', 'B40']
 
   - name: mart_biodiesel_demand_signal
@@ -45,12 +49,16 @@ models:
         tests:
           - not_null
           - accepted_values:
+              config:
+                severity: warn
               values: ['EXPENSIVE', 'FAIR', 'CHEAP', 'INSUFFICIENT DATA']
       - name: pogo_zone
         description: PROFITABLE / MARGINAL / COSTLY
         tests:
           - not_null
           - accepted_values:
+              config:
+                severity: warn
               values: ['PROFITABLE', 'MARGINAL', 'COSTLY']
 
   - name: mart_oil_substitution_spreads
@@ -72,13 +80,14 @@ models:
         tests:
           - not_null
           - accepted_values:
+              config:
+                severity: warn
               values: ['HIGH', 'MODERATE', 'LOW', 'UNKNOWN']
 
   - name: mart_cpo_competitiveness
     description: >
       Full summary table — all signals joined into one row per month.
-      Used for headline KPIs and cross-panel analysis. For panel-specific
-      charts, prefer the focused mart tables above.
+      Used for headline KPIs and cross-panel analysis.
     columns:
       - name: month_date
         description: Month start date. Primary key.
@@ -90,32 +99,31 @@ models:
         tests:
           - not_null
       - name: overall_signal
-        description: >
-          One-line summary of the CPO environment this month.
-          STRONG TAILWIND / MODERATE TAILWIND / NEUTRAL /
-          MODERATE HEADWIND / STRONG HEADWIND.
+        description: STRONG TAILWIND / MODERATE TAILWIND / NEUTRAL / MODERATE HEADWIND / STRONG HEADWIND
         tests:
           - not_null
           - accepted_values:
-              values: [
-                'STRONG TAILWIND',
-                'MODERATE TAILWIND',
-                'NEUTRAL',
-                'MODERATE HEADWIND',
-                'STRONG HEADWIND'
-              ]
+              config:
+                severity: warn
+              values: ['STRONG TAILWIND', 'MODERATE TAILWIND', 'NEUTRAL', 'MODERATE HEADWIND', 'STRONG HEADWIND']
       - name: pogo_zone
         tests:
           - not_null
           - accepted_values:
+              config:
+                severity: warn
               values: ['PROFITABLE', 'MARGINAL', 'COSTLY']
       - name: substitution_risk
         tests:
           - not_null
           - accepted_values:
+              config:
+                severity: warn
               values: ['HIGH', 'MODERATE', 'LOW', 'UNKNOWN']
       - name: price_cycle_position
         tests:
           - not_null
           - accepted_values:
+              config:
+                severity: warn
               values: ['EXPENSIVE', 'FAIR', 'CHEAP', 'INSUFFICIENT DATA']

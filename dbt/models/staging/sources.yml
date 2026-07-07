@@ -54,6 +54,18 @@ sources:
           - name: idr_indexed
             description: USD/IDR indexed to 100 at Jan 2015. Above 100 means IDR has weakened since Jan 2015.
 
+      - name: all_spreads
+        description: >
+          Master 24-column table written by transform_spreads.py. Contains all
+          calculated metrics — POGO spread, z-score, substitution spreads, FX,
+          USDA supply, FAO index. Single source of truth for all mart models.
+        columns:
+          - name: month_date
+            description: Month start date. Primary key.
+            tests:
+              - unique
+              - not_null
+
       - name: indonesia_supply
         description: >
           USDA Indonesia palm oil supply/demand data, forward-filled from annual

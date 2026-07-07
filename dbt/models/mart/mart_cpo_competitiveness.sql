@@ -20,7 +20,7 @@ with all_spreads as (
 supply as (
     select
         month_date,
-        marketing_year,
+        market_year,
         biodiesel_share_pct,
         -- Convert to MMT for display
         round(industrial_consumption_1000mt / 1000.0, 3) as biodiesel_allocation_mmt,
@@ -44,7 +44,7 @@ final as (
         s.month_date,
 
         -- ── Panel 1 — Indonesia policy ─────────────────────────────────────
-        sup.marketing_year,
+        sup.market_year,
         sup.biodiesel_allocation_mmt,
         sup.exports_mmt,
         sup.biodiesel_share_pct,

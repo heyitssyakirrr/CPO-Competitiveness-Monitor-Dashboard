@@ -1,0 +1,30 @@
+pipeline:
+  start_date: "2015-01-01"
+
+# yfinance tickers
+currencies:
+  - "MYRUSD=X"
+  - "IDRUSD=X"
+  - "INRUSD=X"
+  - "CNYUSD=X"
+
+futures:
+  - "BZ=F"
+  - "ZS=F"
+
+# POGO spread calculation
+pogo:
+  brent_to_tonne_factor: 7.3
+
+# CPO z-score rolling window
+zscore:
+  window_months: 36
+
+# Substitution risk thresholds (USD/tonne, CPO vs soy spread)
+substitution_risk:
+  high_threshold:     -50
+  moderate_threshold: -100
+
+# POGO zone thresholds (USD/tonne)
+pogo_zones:
+  marginal_threshold: 150

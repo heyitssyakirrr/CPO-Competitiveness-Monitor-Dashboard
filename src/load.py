@@ -46,7 +46,7 @@ load_dotenv()
 RAW_TABLES = {
     "wb_prices":      ("raw", "wb_prices",      "month_date"),
     "yfinance_daily": ("raw", "yfinance_daily",  "date"),
-    "usda_indonesia": ("raw", "usda_indonesia",  "marketing_year"),
+    "usda_indonesia": ("raw", "usda_indonesia",  "market_year"),
     "fao_ffpi":       ("raw", "fao_ffpi",        "month_date"),
 }
 
@@ -148,6 +148,29 @@ def _upsert(
             """
         ))
 
+        # Step 2b: add primary key constraint if it doesn't exist yet.
+        # ON CONFLICT requires a unique/PK constraint on the conflict column —
+        # CREATE TABLE AS SELECT copies no constraints, so we add it explicitly.
+        # ALTER TABLE ADD CONSTRAINT fails if the constraint already exists,
+        # so we check pg_constraint first (safe and idempotent).
+        conn.execute(text(
+            f"""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conrelid = '{full_table}'::regclass
+                      AND contype IN ('p', 'u')
+                      AND conname = '{table}_pkey'
+                ) THEN
+                    ALTER TABLE {full_table}
+                    ADD CONSTRAINT {table}_pkey PRIMARY KEY ("{pk_col}");
+                END IF;
+            END
+            $$;
+            """
+        ))
+
         # Step 3: upsert from staging → target
         result = conn.execute(text(
             f"""
@@ -223,5 +246,6 @@ def load_raw(
             results[key] = 0
 
     total = sum(results.values())
-    logger.info("load: raw layer complete — %d total rows upserted across %d tables", total, len(results))
+    logger.info("l" \
+    "oad: raw layer complete — %d total rows upserted across %d tables", total, len(results))
     return results
